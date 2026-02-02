@@ -351,55 +351,12 @@ export function useSupabaseSync() {
     init();
   }, [user, loadHousehold, loadDays]);
 
-  // Realtime subscription
-  useEffect(() => {
-    if (!household || !supabase) return;
-
-    const channel = supabase
-      .channel('household-sync')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'naps',
-        },
-        async () => {
-          // Reload days on any nap change
-          const d = await loadDays();
-          setDays(d);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'days',
-        },
-        async () => {
-          const d = await loadDays();
-          setDays(d);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'households',
-          filter: `id=eq.${household.id}`,
-        },
-        (payload) => {
-          setHousehold(payload.new);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [household, loadDays]);
+  // Realtime subscription - disabled for now to avoid websocket issues
+  // TODO: Re-enable when realtime is needed
+  // useEffect(() => {
+  //   if (!household || !supabase) return;
+  //   const channel = supabase.channel('household-sync')...
+  // }, [household, loadDays]);
 
   return {
     household,
