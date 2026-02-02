@@ -1,0 +1,68 @@
+@import './styles/variables.css';
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* iOS-style tap highlight removal */
+a, button, input, select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent iOS text size adjustment */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* App layout */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}

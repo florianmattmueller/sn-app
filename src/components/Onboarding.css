@@ -1,0 +1,120 @@
+.onboarding {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+  padding: var(--spacing-lg);
+  padding-top: calc(var(--spacing-xl) + var(--safe-area-top));
+  padding-bottom: calc(var(--spacing-xl) + var(--safe-area-bottom));
+}
+
+.onboarding-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.onboarding-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.onboarding-title {
+  font-size: var(--font-size-large-title);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  margin-bottom: var(--spacing-sm);
+}
+
+.onboarding-subtitle {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+}
+
+.onboarding-form {
+  flex: 1;
+}
+
+.form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-label {
+  display: block;
+  font-size: var(--font-size-callout);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  font-size: var(--font-size-body);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-accent-blue);
+}
+
+.form-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.form-row .form-input {
+  flex: 1;
+}
+
+.form-separator {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-callout);
+}
+
+.form-hint {
+  display: block;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
+  margin-top: var(--spacing-xs);
+}
+
+.onboarding-button {
+  width: 100%;
+  padding: var(--spacing-md);
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-semibold);
+  color: white;
+  background: var(--color-accent-blue);
+  border-radius: var(--border-radius);
+  margin-top: var(--spacing-lg);
+}
+
+.onboarding-button:disabled {
+  background: var(--color-border);
+  color: var(--color-text-tertiary);
+}
+
+.onboarding-button:active:not(:disabled) {
+  opacity: 0.9;
+}
+
+.onboarding-note {
+  text-align: center;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
+  margin-top: var(--spacing-md);
+}

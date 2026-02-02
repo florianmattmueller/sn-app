@@ -1,0 +1,54 @@
+:root {
+  /* Colors */
+  --color-background: #FFFFFF;
+  --color-surface: #FAFAFA;
+  --color-border: #E5E5E5;
+  --color-border-light: #F0F0F0;
+
+  --color-text-primary: #000000;
+  --color-text-secondary: #666666;
+  --color-text-tertiary: #999999;
+
+  --color-accent-blue: #007AFF;
+  --color-accent-blue-bg: #F0F8FF;
+  --color-accent-green: #34C759;
+  --color-accent-green-bg: rgba(52, 199, 89, 0.08);
+  --color-accent-red: #FF3B30;
+  --color-accent-red-bg: #FFF5F5;
+  --color-accent-purple: #5856D6;
+  --color-accent-purple-bg: #F5F5F7;
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+
+  --font-size-large-title: 32px;
+  --font-size-title: 22px;
+  --font-size-headline: 17px;
+  --font-size-body: 15px;
+  --font-size-callout: 14px;
+  --font-size-caption: 12px;
+  --font-size-caption2: 11px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --letter-spacing-tight: -0.5px;
+  --letter-spacing-wide: 1px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Border */
+  --border-radius: 8px;
+  --border-width: 1px;
+  --border-width-accent: 2px;
+
+  /* Safe areas for iOS */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
