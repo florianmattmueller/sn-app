@@ -147,3 +147,19 @@
 .info-box-text:last-child {
   margin-bottom: 0;
 }
+
+/* Account section */
+.settings-account {
+  margin-top: var(--spacing-xl);
+}
+
+.sign-out-button {
+  width: calc(100% - var(--spacing-md) * 2);
+  margin: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+  padding: var(--spacing-md);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-red);
+  background: var(--color-accent-red-bg);
+  border-radius: var(--border-radius);
+}

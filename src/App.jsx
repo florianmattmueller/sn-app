@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 import { AppStateProvider, useAppState } from './hooks/useAppState';
 import { getTodayISO, formatTime24, getCurrentTimeMinutes } from './utils/timeUtils';
+import AuthScreen from './components/AuthScreen';
 import Timeline from './components/Timeline';
 import HistoryView from './components/HistoryView';
 import SettingsView from './components/SettingsView';
@@ -133,10 +135,32 @@ function AppContent() {
   );
 }
 
-export default function App() {
+function AuthenticatedApp() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="app loading-screen">
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
+
   return (
     <AppStateProvider>
       <AppContent />
     </AppStateProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AuthenticatedApp />
+    </AuthProvider>
   );
 }

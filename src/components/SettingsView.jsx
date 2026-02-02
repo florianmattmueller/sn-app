@@ -1,9 +1,11 @@
 import { useAppState } from '../hooks/useAppState';
+import { useAuth } from '../hooks/useAuth';
 import { formatAge } from '../utils/ageCalculator';
 import './SettingsView.css';
 
 export default function SettingsView() {
   const { settings, updateScheduleSettings, updateBabyInfo } = useAppState();
+  const { user, signOut } = useAuth();
 
   const handleWakeWindowChange = (e) => {
     const value = parseFloat(e.target.value);
@@ -164,6 +166,19 @@ export default function SettingsView() {
             Finding the right wake window helps prevent overtiredness while ensuring
             your baby is ready to sleep when nap time comes.
           </p>
+        </section>
+
+        <section className="settings-section settings-account">
+          <h2 className="section-title">Account</h2>
+          <div className="setting-row">
+            <div className="setting-info">
+              <span className="setting-label">Signed in as</span>
+              <span className="setting-description">{user?.email}</span>
+            </div>
+          </div>
+          <button className="sign-out-button" onClick={signOut}>
+            Sign out
+          </button>
         </section>
       </div>
     </div>

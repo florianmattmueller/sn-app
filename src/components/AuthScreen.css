@@ -1,0 +1,119 @@
+.auth-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  background: var(--color-background);
+}
+
+.auth-content {
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.auth-icon {
+  font-size: 48px;
+  margin-bottom: var(--spacing-md);
+}
+
+.auth-title {
+  font-size: 32px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  margin-bottom: var(--spacing-xs);
+}
+
+.auth-subtitle {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl);
+}
+
+.auth-form {
+  text-align: left;
+}
+
+.auth-input-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.auth-label {
+  display: block;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  margin-bottom: var(--spacing-xs);
+}
+
+.auth-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: var(--font-size-body);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: border-color 0.15s ease;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--color-accent-blue);
+}
+
+.auth-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.auth-error {
+  font-size: var(--font-size-caption);
+  color: var(--color-accent-red);
+  margin-bottom: var(--spacing-md);
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: white;
+  background: var(--color-text-primary);
+  border-radius: var(--border-radius);
+  transition: opacity 0.15s ease;
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-submit-btn:not(:disabled):active {
+  opacity: 0.8;
+}
+
+.auth-footer {
+  margin-top: var(--spacing-lg);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
+}
+
+.auth-hint {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
+  margin-top: var(--spacing-md);
+}
+
+.auth-link-btn {
+  margin-top: var(--spacing-lg);
+  font-size: var(--font-size-caption);
+  color: var(--color-accent-blue);
+  font-weight: var(--font-weight-medium);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
