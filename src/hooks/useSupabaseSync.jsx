@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 import { getTodayISO } from '../utils/timeUtils';
@@ -10,31 +10,13 @@ export function useSupabaseSync() {
   const [days, setDays] = useState({});
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const initializedRef = useRef(false);
+  const householdRef = useRef(null);
 
-  // Load household and settings
-  const loadHousehold = useCallback(async () => {
-    if (!user || !supabase) return null;
-
-    // Get user's household membership
-    const { data: membership } = await supabase
-      .from('household_members')
-      .select('household_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (membership) {
-      // Load existing household
-      const { data: householdData } = await supabase
-        .from('households')
-        .select('*')
-        .eq('id', membership.household_id)
-        .single();
-
-      return householdData;
-    }
-
-    return null;
-  }, [user]);
+  // Keep ref in sync with state
+  useEffect(() => {
+    householdRef.current = household;
+  }, [household]);
 
   // Create new household for user
   const createHousehold = useCallback(async (babyInfo, scheduleSettings) => {
@@ -68,81 +50,47 @@ export function useSupabaseSync() {
       });
 
     setHousehold(newHousehold);
+    householdRef.current = newHousehold;
     return newHousehold;
   }, [user]);
 
   // Update household settings
   const updateHouseholdSettings = useCallback(async (updates) => {
-    if (!household || !supabase) return;
+    const h = householdRef.current;
+    if (!h || !supabase) return;
 
     setSyncing(true);
     const { data, error } = await supabase
       .from('households')
       .update({
-        baby_name: updates.baby?.name ?? household.baby_name,
-        baby_birthday: updates.baby?.birthday ?? household.baby_birthday,
-        default_wake_window: updates.schedule?.defaultWakeWindow ?? household.default_wake_window,
-        default_nap_duration: updates.schedule?.defaultNapDuration ?? household.default_nap_duration,
-        typical_wake_time: updates.schedule?.typicalWakeTime ?? household.typical_wake_time,
-        bedtime: updates.schedule?.bedtime ?? household.bedtime,
+        baby_name: updates.baby?.name ?? h.baby_name,
+        baby_birthday: updates.baby?.birthday ?? h.baby_birthday,
+        default_wake_window: updates.schedule?.defaultWakeWindow ?? h.default_wake_window,
+        default_nap_duration: updates.schedule?.defaultNapDuration ?? h.default_nap_duration,
+        typical_wake_time: updates.schedule?.typicalWakeTime ?? h.typical_wake_time,
+        bedtime: updates.schedule?.bedtime ?? h.bedtime,
       })
-      .eq('id', household.id)
+      .eq('id', h.id)
       .select()
       .single();
 
     if (!error && data) {
       setHousehold(data);
+      householdRef.current = data;
     }
     setSyncing(false);
-  }, [household]);
-
-  // Load days data
-  const loadDays = useCallback(async () => {
-    if (!household || !supabase) return {};
-
-    const { data: daysData } = await supabase
-      .from('days')
-      .select(`
-        *,
-        naps (*)
-      `)
-      .eq('household_id', household.id)
-      .order('date', { ascending: false })
-      .limit(30);
-
-    if (!daysData) return {};
-
-    // Convert to our format
-    const daysMap = {};
-    for (const day of daysData) {
-      daysMap[day.date] = {
-        date: day.date,
-        actualWakeTime: day.actual_wake_time,
-        actualBedtime: day.actual_bedtime,
-        skippedNapSlots: day.skipped_nap_slots || [],
-        sessions: day.naps.map(nap => ({
-          id: nap.id,
-          type: 'nap',
-          startTime: nap.start_time,
-          endTime: nap.end_time,
-          notes: nap.notes || '',
-        })),
-        _dbId: day.id,
-      };
-    }
-
-    return daysMap;
-  }, [household]);
+  }, []);
 
   // Get or create day record
   const getOrCreateDay = useCallback(async (date) => {
-    if (!household || !supabase) return null;
+    const h = householdRef.current;
+    if (!h || !supabase) return null;
 
     // Check if day exists
     let { data: existingDay } = await supabase
       .from('days')
       .select('id')
-      .eq('household_id', household.id)
+      .eq('household_id', h.id)
       .eq('date', date)
       .single();
 
@@ -152,14 +100,14 @@ export function useSupabaseSync() {
     const { data: newDay } = await supabase
       .from('days')
       .insert({
-        household_id: household.id,
+        household_id: h.id,
         date,
       })
       .select('id')
       .single();
 
     return newDay?.id;
-  }, [household]);
+  }, []);
 
   // Set wake time
   const setWakeTime = useCallback(async (wakeTime) => {
@@ -246,9 +194,12 @@ export function useSupabaseSync() {
       for (const date of Object.keys(newDays)) {
         const day = newDays[date];
         if (day.sessions) {
-          day.sessions = day.sessions.map(s =>
-            s.id === napId ? { ...s, ...updates } : s
-          );
+          newDays[date] = {
+            ...day,
+            sessions: day.sessions.map(s =>
+              s.id === napId ? { ...s, ...updates } : s
+            ),
+          };
         }
       }
       return newDays;
@@ -271,7 +222,10 @@ export function useSupabaseSync() {
       for (const date of Object.keys(newDays)) {
         const day = newDays[date];
         if (day.sessions) {
-          day.sessions = day.sessions.filter(s => s.id !== napId);
+          newDays[date] = {
+            ...day,
+            sessions: day.sessions.filter(s => s.id !== napId),
+          };
         }
       }
       return newDays;
@@ -285,29 +239,31 @@ export function useSupabaseSync() {
     const dayId = await getOrCreateDay(today);
     if (!dayId || !supabase) return;
 
-    const currentSkipped = days[today]?.skippedNapSlots || [];
-    if (currentSkipped.includes(slotIndex)) return;
+    setDays(prev => {
+      const currentSkipped = prev[today]?.skippedNapSlots || [];
+      if (currentSkipped.includes(slotIndex)) return prev;
 
-    const newSkipped = [...currentSkipped, slotIndex];
+      const newSkipped = [...currentSkipped, slotIndex];
 
-    setSyncing(true);
-    await supabase
-      .from('days')
-      .update({ skipped_nap_slots: newSkipped })
-      .eq('id', dayId);
+      // Update in background
+      supabase
+        .from('days')
+        .update({ skipped_nap_slots: newSkipped })
+        .eq('id', dayId)
+        .then();
 
-    setDays(prev => ({
-      ...prev,
-      [today]: {
-        ...prev[today],
-        date: today,
-        skippedNapSlots: newSkipped,
-        sessions: prev[today]?.sessions || [],
-        _dbId: dayId,
-      },
-    }));
-    setSyncing(false);
-  }, [days, getOrCreateDay]);
+      return {
+        ...prev,
+        [today]: {
+          ...prev[today],
+          date: today,
+          skippedNapSlots: newSkipped,
+          sessions: prev[today]?.sessions || [],
+          _dbId: dayId,
+        },
+      };
+    });
+  }, [getOrCreateDay]);
 
   // Convert household to settings format
   useEffect(() => {
@@ -328,35 +284,79 @@ export function useSupabaseSync() {
     }
   }, [household]);
 
-  // Initial load
+  // Initial load - only runs once per user
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      initializedRef.current = false;
+      return;
+    }
+
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     async function init() {
-      if (!user) {
+      if (!supabase) {
         setLoading(false);
         return;
       }
 
       setLoading(true);
-      const h = await loadHousehold();
-      setHousehold(h);
 
-      if (h) {
-        const d = await loadDays();
-        setDays(d);
+      // Load household
+      const { data: membership } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (membership) {
+        const { data: householdData } = await supabase
+          .from('households')
+          .select('*')
+          .eq('id', membership.household_id)
+          .single();
+
+        if (householdData) {
+          setHousehold(householdData);
+          householdRef.current = householdData;
+
+          // Load days
+          const { data: daysData } = await supabase
+            .from('days')
+            .select(`*, naps (*)`)
+            .eq('household_id', householdData.id)
+            .order('date', { ascending: false })
+            .limit(30);
+
+          if (daysData) {
+            const daysMap = {};
+            for (const day of daysData) {
+              daysMap[day.date] = {
+                date: day.date,
+                actualWakeTime: day.actual_wake_time,
+                actualBedtime: day.actual_bedtime,
+                skippedNapSlots: day.skipped_nap_slots || [],
+                sessions: day.naps.map(nap => ({
+                  id: nap.id,
+                  type: 'nap',
+                  startTime: nap.start_time,
+                  endTime: nap.end_time,
+                  notes: nap.notes || '',
+                })),
+                _dbId: day.id,
+              };
+            }
+            setDays(daysMap);
+          }
+        }
       }
 
       setLoading(false);
     }
 
     init();
-  }, [user, loadHousehold, loadDays]);
-
-  // Realtime subscription - disabled for now to avoid websocket issues
-  // TODO: Re-enable when realtime is needed
-  // useEffect(() => {
-  //   if (!household || !supabase) return;
-  //   const channel = supabase.channel('household-sync')...
-  // }, [household, loadDays]);
+  }, [user]);
 
   return {
     household,
