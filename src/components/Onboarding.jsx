@@ -3,23 +3,33 @@ import { useAppState } from '../hooks/useAppState';
 import './Onboarding.css';
 
 export default function Onboarding() {
-  const { settings, updateBabyInfo, updateScheduleSettings, completeOnboarding } = useAppState();
+  const { settings, completeOnboarding } = useAppState();
 
-  const [birthday, setBirthday] = useState(settings.baby.birthday || '');
-  const [name, setName] = useState(settings.baby.name || '');
-  const [typicalWakeTime, setTypicalWakeTime] = useState(settings.schedule.typicalWakeTime);
-  const [bedtime, setBedtime] = useState(settings.schedule.bedtime || '19:00');
+  const [birthday, setBirthday] = useState(settings.baby?.birthday || '');
+  const [name, setName] = useState(settings.baby?.name || '');
+  const [typicalWakeTime, setTypicalWakeTime] = useState(settings.schedule?.typicalWakeTime || '06:30');
+  const [bedtime, setBedtime] = useState(settings.schedule?.bedtime || '19:00');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleContinue = () => {
-    updateBabyInfo({
-      birthday: birthday || null,
-      name: name || null,
-    });
-    updateScheduleSettings({
-      typicalWakeTime,
-      bedtime,
-    });
-    completeOnboarding();
+  const handleContinue = async () => {
+    setIsSubmitting(true);
+    try {
+      await completeOnboarding(
+        {
+          name: name || null,
+          birthday: birthday || null,
+        },
+        {
+          typicalWakeTime,
+          bedtime,
+          defaultWakeWindow: settings.schedule?.defaultWakeWindow || 1.5,
+          defaultNapDuration: settings.schedule?.defaultNapDuration || 0.5,
+        }
+      );
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      setIsSubmitting(false);
+    }
   };
 
   const isValid = birthday !== '';
@@ -84,9 +94,9 @@ export default function Onboarding() {
         <button
           className="onboarding-button"
           onClick={handleContinue}
-          disabled={!isValid}
+          disabled={!isValid || isSubmitting}
         >
-          Get Started
+          {isSubmitting ? 'Setting up...' : 'Get Started'}
         </button>
 
         <p className="onboarding-note">

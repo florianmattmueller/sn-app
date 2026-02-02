@@ -1,192 +1,123 @@
-import { createContext, useContext, useCallback } from 'react';
-import { useLocalStorage, defaultSettings, createEmptyDayLog } from './useLocalStorage';
+import { createContext, useContext, useCallback, useMemo } from 'react';
+import { useSupabaseSync } from './useSupabaseSync';
 import { getTodayISO } from '../utils/timeUtils';
-import { generateNapId } from '../utils/scheduleAlgorithm';
+import { defaultSettings, createEmptyDayLog } from './useLocalStorage';
 
 const AppStateContext = createContext(null);
 
 export function AppStateProvider({ children }) {
-  const [settings, setSettings] = useLocalStorage('snap-settings', defaultSettings);
-  const [days, setDays] = useLocalStorage('snap-days', {});
+  const {
+    household,
+    settings: supabaseSettings,
+    days: supabaseDays,
+    loading,
+    syncing,
+    createHousehold,
+    updateHouseholdSettings,
+    setWakeTime: supabaseSetWakeTime,
+    addNap: supabaseAddNap,
+    updateNap: supabaseUpdateNap,
+    deleteNap: supabaseDeleteNap,
+    skipNapSlot: supabaseSkipNapSlot,
+  } = useSupabaseSync();
 
-  // Get or create today's log
-  const getTodayLog = useCallback(() => {
-    const today = getTodayISO();
-    return days[today] || createEmptyDayLog(today);
-  }, [days]);
+  // Use Supabase settings or defaults
+  const settings = useMemo(() => {
+    if (supabaseSettings) return supabaseSettings;
+    if (household === null && !loading) {
+      // No household yet - return defaults with onboarding incomplete
+      return { ...defaultSettings, onboardingComplete: false };
+    }
+    return defaultSettings;
+  }, [supabaseSettings, household, loading]);
 
   // Get a specific day's log
   const getDayLog = useCallback(
     (date) => {
-      return days[date] || createEmptyDayLog(date);
+      return supabaseDays[date] || createEmptyDayLog(date);
     },
-    [days]
+    [supabaseDays]
   );
 
-  // Update today's wake time
+  // Get today's log
+  const getTodayLog = useCallback(() => {
+    const today = getTodayISO();
+    return getDayLog(today);
+  }, [getDayLog]);
+
+  // Set wake time
   const setWakeTime = useCallback(
     (wakeTime) => {
-      const today = getTodayISO();
-      setDays((prev) => ({
-        ...prev,
-        [today]: {
-          ...getDayLog(today),
-          actualWakeTime: wakeTime,
-        },
-      }));
+      supabaseSetWakeTime(wakeTime);
     },
-    [getDayLog, setDays]
+    [supabaseSetWakeTime]
   );
 
-  // Update today's bedtime
+  // Set bedtime (updates household settings)
   const setBedtime = useCallback(
     (bedtime) => {
-      const today = getTodayISO();
-      setDays((prev) => ({
-        ...prev,
-        [today]: {
-          ...getDayLog(today),
-          actualBedtime: bedtime,
-        },
-      }));
+      updateHouseholdSettings({ schedule: { bedtime } });
     },
-    [getDayLog, setDays]
+    [updateHouseholdSettings]
   );
 
   // Add a new nap
   const addNap = useCallback(
     (startTime, endTime = null) => {
-      const today = getTodayISO();
-      const newNap = {
-        id: generateNapId(),
-        type: 'nap',
-        startTime,
-        endTime,
-        notes: '',
-      };
-
-      setDays((prev) => {
-        const dayLog = prev[today] || createEmptyDayLog(today);
-        return {
-          ...prev,
-          [today]: {
-            ...dayLog,
-            sessions: [...dayLog.sessions, newNap],
-          },
-        };
-      });
-
-      return newNap.id;
+      return supabaseAddNap(startTime, endTime);
     },
-    [setDays]
+    [supabaseAddNap]
   );
 
   // Update a nap
   const updateNap = useCallback(
     (napId, updates) => {
-      const today = getTodayISO();
-      setDays((prev) => {
-        const dayLog = prev[today] || createEmptyDayLog(today);
-        return {
-          ...prev,
-          [today]: {
-            ...dayLog,
-            sessions: dayLog.sessions.map((session) =>
-              session.id === napId ? { ...session, ...updates } : session
-            ),
-          },
-        };
-      });
+      supabaseUpdateNap(napId, updates);
     },
-    [setDays]
+    [supabaseUpdateNap]
   );
 
   // Delete a nap
   const deleteNap = useCallback(
     (napId) => {
-      const today = getTodayISO();
-      setDays((prev) => {
-        const dayLog = prev[today] || createEmptyDayLog(today);
-        return {
-          ...prev,
-          [today]: {
-            ...dayLog,
-            sessions: dayLog.sessions.filter((session) => session.id !== napId),
-          },
-        };
-      });
+      supabaseDeleteNap(napId);
     },
-    [setDays]
+    [supabaseDeleteNap]
   );
 
   // Skip a predicted nap slot
   const skipNapSlot = useCallback(
     (slotIndex) => {
-      const today = getTodayISO();
-      setDays((prev) => {
-        const dayLog = prev[today] || createEmptyDayLog(today);
-        const skippedNapSlots = dayLog.skippedNapSlots || [];
-        if (skippedNapSlots.includes(slotIndex)) return prev;
-        return {
-          ...prev,
-          [today]: {
-            ...dayLog,
-            skippedNapSlots: [...skippedNapSlots, slotIndex],
-          },
-        };
-      });
+      supabaseSkipNapSlot(slotIndex);
     },
-    [setDays]
-  );
-
-  // Update settings
-  const updateSettings = useCallback(
-    (updates) => {
-      setSettings((prev) => ({
-        ...prev,
-        ...updates,
-      }));
-    },
-    [setSettings]
+    [supabaseSkipNapSlot]
   );
 
   // Update schedule settings
   const updateScheduleSettings = useCallback(
     (updates) => {
-      setSettings((prev) => ({
-        ...prev,
-        schedule: {
-          ...prev.schedule,
-          ...updates,
-        },
-      }));
+      updateHouseholdSettings({ schedule: updates });
     },
-    [setSettings]
+    [updateHouseholdSettings]
   );
 
   // Update baby info
   const updateBabyInfo = useCallback(
     (updates) => {
-      setSettings((prev) => ({
-        ...prev,
-        baby: {
-          ...prev.baby,
-          ...updates,
-        },
-      }));
+      updateHouseholdSettings({ baby: updates });
     },
-    [setSettings]
+    [updateHouseholdSettings]
   );
 
-  // Complete onboarding
-  const completeOnboarding = useCallback(() => {
-    setSettings((prev) => ({
-      ...prev,
-      onboardingComplete: true,
-    }));
-  }, [setSettings]);
+  // Complete onboarding (creates household)
+  const completeOnboarding = useCallback(
+    async (babyInfo, scheduleSettings) => {
+      await createHousehold(babyInfo, scheduleSettings);
+    },
+    [createHousehold]
+  );
 
-  // Get all days for history (last 30 days)
+  // Get history days
   const getHistoryDays = useCallback(() => {
     const result = [];
     const today = new Date();
@@ -195,19 +126,21 @@ export function AppStateProvider({ children }) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-      const dayLog = days[dateStr];
+      const dayLog = supabaseDays[dateStr];
 
-      if (dayLog && (dayLog.actualWakeTime || dayLog.sessions.length > 0)) {
+      if (dayLog && (dayLog.actualWakeTime || dayLog.sessions?.length > 0)) {
         result.push(dayLog);
       }
     }
 
     return result;
-  }, [days]);
+  }, [supabaseDays]);
 
   const value = {
     settings,
-    days,
+    days: supabaseDays,
+    loading,
+    syncing,
     getTodayLog,
     getDayLog,
     setWakeTime,
@@ -216,7 +149,6 @@ export function AppStateProvider({ children }) {
     updateNap,
     deleteNap,
     skipNapSlot,
-    updateSettings,
     updateScheduleSettings,
     updateBabyInfo,
     completeOnboarding,

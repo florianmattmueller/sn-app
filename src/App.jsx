@@ -13,12 +13,21 @@ import NapEditModal from './components/NapEditModal';
 import './index.css';
 
 function AppContent() {
-  const { settings, setWakeTime, updateScheduleSettings, addNap, updateNap, deleteNap, skipNapSlot } = useAppState();
+  const { settings, loading, setWakeTime, updateScheduleSettings, addNap, updateNap, deleteNap, skipNapSlot } = useAppState();
   const [activeTab, setActiveTab] = useState('today');
   const [selectedDate, setSelectedDate] = useState(getTodayISO());
   const [showWakeTimePicker, setShowWakeTimePicker] = useState(false);
   const [showBedtimePicker, setShowBedtimePicker] = useState(false);
   const [editingNap, setEditingNap] = useState(null);
+
+  // Show loading while fetching from Supabase
+  if (loading) {
+    return (
+      <div className="app loading-screen">
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
 
   // Show onboarding if not complete
   if (!settings.onboardingComplete) {
