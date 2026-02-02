@@ -86,10 +86,14 @@ export default function Timeline({ date, onEditWakeTime, onEditBedtime, onEditNa
 
   // Scroll to ~06:00 on mount
   useEffect(() => {
-    if (scrollRef.current) {
-      const scrollTo = 6 * 60 * PIXELS_PER_MINUTE - 20; // 6:00 minus a bit of padding
-      scrollRef.current.scrollTop = Math.max(0, scrollTo);
-    }
+    // Use setTimeout to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (scrollRef.current) {
+        const scrollTo = 6 * 60 * PIXELS_PER_MINUTE;
+        scrollRef.current.scrollTop = scrollTo;
+      }
+    }, 50);
+    return () => clearTimeout(timer);
   }, []);
 
   // Handle drag updates from TimelineEvent
